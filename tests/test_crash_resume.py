@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from runbook_autopilot.executor import PHASES
+from blast_door.executor import PHASES
 
 from helpers import FIXTURE, drive
 
@@ -45,7 +45,7 @@ def test_without_idempotency_a_crash_after_effect_double_executes(tmp_path, step
 
 def test_crash_after_effect_is_recovered_from_ledger_not_replayed(tmp_path):
     _, _, _ = drive(tmp_path, crash_at="restart-metrics:after_effect")
-    from runbook_autopilot.system import System
+    from blast_door.system import System
     s = System(tmp_path)
     events = [r["event"] for r in s.audit.records()]
     assert "effect_found_in_ledger" in events
@@ -54,13 +54,13 @@ def test_crash_after_effect_is_recovered_from_ledger_not_replayed(tmp_path):
 
 
 def run_cli(state_dir, *args, crash=None, extra_env=None):
-    env = {**os.environ, "RUNBOOK_OPERATOR_TOKENS": "alice:alice-secret,bob:bob-secret",
-           "RUNBOOK_STATE_DIR": str(state_dir)}
-    env.pop("RUNBOOK_CRASH_AT", None)
+    env = {**os.environ, "BLAST_DOOR_OPERATOR_TOKENS": "alice:alice-secret,bob:bob-secret",
+           "BLAST_DOOR_STATE_DIR": str(state_dir)}
+    env.pop("BLAST_DOOR_CRASH_AT", None)
     if crash:
-        env["RUNBOOK_CRASH_AT"] = crash
+        env["BLAST_DOOR_CRASH_AT"] = crash
     env.update(extra_env or {})
-    return subprocess.run([sys.executable, "-m", "runbook_autopilot", *args], env=env,
+    return subprocess.run([sys.executable, "-m", "blast_door", *args], env=env,
                           capture_output=True, text=True, timeout=120)
 
 

@@ -20,8 +20,8 @@ def configure(provider) -> None:
 
 def _tracer():
     if _provider is not None:
-        return trace.get_tracer("runbook_autopilot", tracer_provider=_provider)
-    return trace.get_tracer("runbook_autopilot")
+        return trace.get_tracer("blast_door", tracer_provider=_provider)
+    return trace.get_tracer("blast_door")
 
 
 def _clean(v):

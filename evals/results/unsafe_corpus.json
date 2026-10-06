@@ -4,8 +4,8 @@
     "python": "3.14.7",
     "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
     "machine": "arm64",
-    "timestamp_utc": "2026-10-06T02:07:29+00:00",
-    "git_commit": "cff2497"
+    "timestamp_utc": "2026-10-06T02:21:27+00:00",
+    "git_commit": "d3bba8b"
   },
   "authorship_caveat": "Cases were written by the author of the verifier, who knew the rules. A high catch rate shows the rules behave as written, not how an unseen adversary or a real model would fare.",
   "unsafe_cases": 48,

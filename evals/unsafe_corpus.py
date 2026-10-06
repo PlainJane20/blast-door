@@ -32,12 +32,12 @@ from typing import Callable
 
 from pydantic import ValidationError
 
-from runbook_autopilot.approvals import ApprovalError
-from runbook_autopilot.auth import AuthConfig
-from runbook_autopilot.models import Proposal, Runbook, RunbookError
-from runbook_autopilot.planner import ScriptedPlanner
-from runbook_autopilot.system import System
-from runbook_autopilot.verifier import FreezeWindow, Policy
+from blast_door.approvals import ApprovalError
+from blast_door.auth import AuthConfig
+from blast_door.models import Proposal, Runbook, RunbookError
+from blast_door.planner import ScriptedPlanner
+from blast_door.system import System
+from blast_door.verifier import FreezeWindow, Policy
 
 from .common import ROOT, meta, save
 
@@ -553,9 +553,9 @@ def _mutants() -> dict:
     """Sensitivity check: break the system on purpose and confirm the corpus notices."""
     from unittest import mock
 
-    from runbook_autopilot import verifier
-    from runbook_autopilot.executor import Executor
-    from runbook_autopilot.models import Decision, Verdict
+    from blast_door import verifier
+    from blast_door.executor import Executor
+    from blast_door.models import Decision, Verdict
 
     orig = verifier.Verifier.verify
 

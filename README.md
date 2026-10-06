@@ -1,15 +1,15 @@
-<img src="docs/runbook-autopilot-banner.svg" alt="Runbook Autopilot: runbooks that prove it before they touch it" width="100%" />
+<img src="docs/blast-door-banner.svg" alt="Blast Door: runbooks that prove it before they touch it" width="100%" />
 
-# Runbook Autopilot
+# Blast Door
 
-### *Runbooks that prove it before they touch it*
+### *Know the blast radius before you press the button*
 
 <div align="center">
 
 [![Python 3.11+](https://img.shields.io/badge/Python_3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Pydantic v2](https://img.shields.io/badge/Pydantic-v2-E92063?style=for-the-badge&logo=pydantic&logoColor=white)](src/runbook_autopilot/models.py)
-[![SQLite](https://img.shields.io/badge/SQLite-checkpoints-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](src/runbook_autopilot/store.py)
-[![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-spans-f59e0b?style=for-the-badge&logo=opentelemetry&logoColor=white)](src/runbook_autopilot/tracing.py)
+[![Pydantic v2](https://img.shields.io/badge/Pydantic-v2-E92063?style=for-the-badge&logo=pydantic&logoColor=white)](src/blast_door/models.py)
+[![SQLite](https://img.shields.io/badge/SQLite-checkpoints-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](src/blast_door/store.py)
+[![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-spans-f59e0b?style=for-the-badge&logo=opentelemetry&logoColor=white)](src/blast_door/tracing.py)
 [![Tests](https://img.shields.io/badge/Offline_tests-185_passing-2a78d6?style=for-the-badge)](tests/)
 [![Environment](https://img.shields.io/badge/Environment-SIMULATED-b45309?style=for-the-badge)](#known-limits)
 
@@ -51,7 +51,7 @@ a loop that survives `kill -9` without doing anything twice.
 
 ## How it works, in plain terms
 
-![How Runbook Autopilot works: runbook, planner, dry run, verifier, verdict, human gate, action, ledger and audit](docs/images/how-it-works.svg)
+![How Blast Door works: runbook, planner, dry run, verifier, verdict, human gate, action, ledger and audit](docs/images/how-it-works.svg)
 
 A runbook lists steps. For each step the planner proposes an action. The system first
 **rehearses** it (a dry run that changes nothing and lists everything it would touch,
@@ -121,7 +121,7 @@ uninterrupted run, with no duplicate write and a verifying audit chain.
 | `after_execute` | 5 | 5 |
 | **Total** | **30** | **30 (100%)**, 0 duplicate writes, all 30 kill points confirmed reached |
 
-**Negative control:** with idempotency keys switched off (`RUNBOOK_UNSAFE_NO_IDEMPOTENCY`,
+**Negative control:** with idempotency keys switched off (`BLAST_DOOR_UNSAFE_NO_IDEMPOTENCY`,
 for the eval only), the same kill at `after_effect` produced a duplicate write on 3 of 3
 write steps, and the uninterrupted run had none. So the ledger check can fail, and the
 30 of 30 is not vacuous.
@@ -248,30 +248,30 @@ python -m evals.run_all             # crash matrix, unsafe corpus, latency -> ev
 Run an example (state goes to `.runbook-state/`, which is gitignored):
 
 ```bash
-export RUNBOOK_OPERATOR_TOKENS=alice:alice-secret,bob:bob-secret   # name:token
-python -m runbook_autopilot run examples/safe_restart.yaml --policy examples/policy.yaml
-python -m runbook_autopilot run examples/unsafe_denied.yaml --policy examples/policy.yaml   # exit 1, denied
+export BLAST_DOOR_OPERATOR_TOKENS=alice:alice-secret,bob:bob-secret   # name:token
+python -m blast_door run examples/safe_restart.yaml --policy examples/policy.yaml
+python -m blast_door run examples/unsafe_denied.yaml --policy examples/policy.yaml   # exit 1, denied
 
 # approval flow
-python -m runbook_autopilot run examples/protected_needs_approval.yaml \
+python -m blast_door run examples/protected_needs_approval.yaml \
     --policy examples/policy.yaml --as alice --token alice-secret --run-id demo   # exit 3, prints approval id
-python -m runbook_autopilot approve <approval_id> --as alice --token alice-secret # rejected: self-approval
-python -m runbook_autopilot approve <approval_id> --as bob   --token bob-secret   # granted
-python -m runbook_autopilot resume demo                                           # completes
-python -m runbook_autopilot status demo
-python -m runbook_autopilot verify-audit
+python -m blast_door approve <approval_id> --as alice --token alice-secret # rejected: self-approval
+python -m blast_door approve <approval_id> --as bob   --token bob-secret   # granted
+python -m blast_door resume demo                                           # completes
+python -m blast_door status demo
+python -m blast_door verify-audit
 ```
 
 Exit codes: `0` completed, `1` failed or denied, `2` usage or invalid runbook, `3`
-paused awaiting approval. With no `RUNBOOK_OPERATOR_TOKENS` set, nobody can approve
+paused awaiting approval. With no `BLAST_DOOR_OPERATOR_TOKENS` set, nobody can approve
 (there is no demo mode). Use long random secrets and never commit them.
 
 Kill a run yourself and resume it:
 
 ```bash
-RUNBOOK_CRASH_AT=restart-web:after_effect python -m runbook_autopilot run \
+BLAST_DOOR_CRASH_AT=restart-web:after_effect python -m blast_door run \
     examples/safe_restart.yaml --run-id r1        # process dies with exit 137
-python -m runbook_autopilot resume r1             # recovers from the ledger, no second write
+python -m blast_door resume r1             # recovers from the ledger, no second write
 ```
 
 Phases: `before_plan`, `after_plan`, `after_verdict`, `before_execute`, `after_effect`,
@@ -315,8 +315,8 @@ Phases: `before_plan`, `after_plan`, `after_verdict`, `before_execute`, `after_e
 ## Repository map
 
 ```
-runbook-autopilot/
-├── src/runbook_autopilot/   models, sim_env, tools, verifier, executor, approvals, auth,
+blast-door/
+├── src/blast_door/   models, sim_env, tools, verifier, executor, approvals, auth,
 │                            audit, store, planner, tracing, system, cli
 ├── examples/                3 runbooks + policy.yaml
 ├── tests/                   185 offline tests (unit, crash/resume, CLI, tracing, evals)

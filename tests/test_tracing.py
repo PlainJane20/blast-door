@@ -3,7 +3,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-from runbook_autopilot import tracing
+from blast_door import tracing
 
 from conftest import approve_pending, runbook, start
 

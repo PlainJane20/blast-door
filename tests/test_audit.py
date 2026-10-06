@@ -1,8 +1,8 @@
 import pytest
 import sqlite3
 
-from runbook_autopilot.audit import AuditLog
-from runbook_autopilot.store import RunStore
+from blast_door.audit import AuditLog
+from blast_door.store import RunStore
 
 from conftest import approve_pending, runbook, start
 

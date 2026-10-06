@@ -4,8 +4,8 @@
     "python": "3.14.7",
     "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
     "machine": "arm64",
-    "timestamp_utc": "2026-10-06T02:07:30+00:00",
-    "git_commit": "cff2497"
+    "timestamp_utc": "2026-10-06T02:21:28+00:00",
+    "git_commit": "d3bba8b"
   },
   "caveats": [
     "* In-process, single thread, warm caches, after a warm-up. No network, no",
@@ -23,23 +23,23 @@
   ],
   "verify": {
     "n": 5000,
-    "p50_ms": 0.0037,
+    "p50_ms": 0.0038,
     "p95_ms": 0.0055,
     "p99_ms": 0.0057,
-    "max_ms": 0.0469
+    "max_ms": 0.0226
   },
   "dry_run_plan": {
     "n": 1000,
-    "p50_ms": 0.0599,
-    "p95_ms": 0.0974,
-    "p99_ms": 0.1024,
-    "max_ms": 0.1401
+    "p50_ms": 0.0606,
+    "p95_ms": 0.0996,
+    "p99_ms": 0.1069,
+    "max_ms": 0.1445
   },
   "checkpoint_commit": {
     "n": 500,
-    "p50_ms": 0.0571,
-    "p95_ms": 0.0818,
-    "p99_ms": 0.1232,
-    "max_ms": 0.3768
+    "p50_ms": 0.0593,
+    "p95_ms": 0.0948,
+    "p99_ms": 0.1153,
+    "max_ms": 0.3983
   }
 }

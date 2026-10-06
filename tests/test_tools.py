@@ -1,7 +1,7 @@
 import pytest
 
-from runbook_autopilot.models import ToolKind
-from runbook_autopilot.tools import ParamsError, ToolRegistry
+from blast_door.models import ToolKind
+from blast_door.tools import ParamsError, ToolRegistry
 
 REG = ToolRegistry.default()
 
@@ -43,7 +43,7 @@ def test_bad_params_rejected(tool, params):
 
 
 def test_scale_to_zero_flag_in_blast_radius():
-    from runbook_autopilot.models import DryRunResult
+    from blast_door.models import DryRunResult
     spec = REG.maybe("scale_service")
     p = REG.validate_params("scale_service", {"service": "web", "replicas": 0})
     b = spec.blast(p, DryRunResult(affected_services=["web"]))
@@ -53,7 +53,7 @@ def test_scale_to_zero_flag_in_blast_radius():
 
 
 def test_read_tools_have_empty_blast_radius():
-    from runbook_autopilot.models import DryRunResult
+    from blast_door.models import DryRunResult
     b = REG.maybe("get_metrics").blast(REG.validate_params("get_metrics", {"service": "web"}),
                                        DryRunResult())
     assert b.count == 0

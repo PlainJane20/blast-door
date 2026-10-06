@@ -23,28 +23,28 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from runbook_autopilot.executor import PHASES
-from runbook_autopilot.models import Runbook, ToolKind
-from runbook_autopilot.sim_env import SimEnv
-from runbook_autopilot.tools import ToolRegistry
+from blast_door.executor import PHASES
+from blast_door.models import Runbook, ToolKind
+from blast_door.sim_env import SimEnv
+from blast_door.tools import ToolRegistry
 
 from .common import ROOT, meta, save
 
 FIXTURE = ROOT / "evals" / "fixtures" / "crash_matrix.yaml"
 TOKENS = "alice:alice-secret,bob:bob-secret"
 RUN_ID = "cm"
-ENV_NO_IDEM = "RUNBOOK_UNSAFE_NO_IDEMPOTENCY"
+ENV_NO_IDEM = "BLAST_DOOR_UNSAFE_NO_IDEMPOTENCY"
 
 
 def cli(state_dir: Path, *args: str, crash: str | None = None, no_idem: bool = False):
-    env = {**os.environ, "RUNBOOK_OPERATOR_TOKENS": TOKENS, "RUNBOOK_STATE_DIR": str(state_dir)}
-    env.pop("RUNBOOK_CRASH_AT", None)
+    env = {**os.environ, "BLAST_DOOR_OPERATOR_TOKENS": TOKENS, "BLAST_DOOR_STATE_DIR": str(state_dir)}
+    env.pop("BLAST_DOOR_CRASH_AT", None)
     env.pop(ENV_NO_IDEM, None)
     if crash:
-        env["RUNBOOK_CRASH_AT"] = crash
+        env["BLAST_DOOR_CRASH_AT"] = crash
     if no_idem:
         env[ENV_NO_IDEM] = "1"
-    return subprocess.run([sys.executable, "-m", "runbook_autopilot", *args], env=env,
+    return subprocess.run([sys.executable, "-m", "blast_door", *args], env=env,
                           capture_output=True, text=True, timeout=180, cwd=ROOT)
 
 

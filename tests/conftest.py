@@ -1,9 +1,9 @@
 import pytest
 
-from runbook_autopilot.auth import AuthConfig
-from runbook_autopilot.models import Runbook
-from runbook_autopilot.system import System
-from runbook_autopilot.verifier import Policy
+from blast_door.auth import AuthConfig
+from blast_door.models import Runbook
+from blast_door.system import System
+from blast_door.verifier import Policy
 
 T0 = 1_800_000_000.0  # fixed, simulated "now" (2027-01-15 UTC)
 TOKENS = "alice:alice-secret,bob:bob-secret,carol:carol-secret"

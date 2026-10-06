@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" role="img" aria-labelledby="t d" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">
-  <title id="t">How Runbook Autopilot works</title>
+  <title id="t">How Blast Door works</title>
   <desc id="d">A runbook step is proposed by a planner, proven by a dry run against a simulated environment, and judged by a deterministic verifier that returns allow, needs approval or deny. Approval needs a second person. The write runs with an idempotency key and every transition is checkpointed and audited.</desc>
   <defs>
     <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -11,7 +11,7 @@
   </defs>
   <rect width="1200" height="640" rx="20" fill="#f8fafc"/>
 
-  <text x="600" y="46" text-anchor="middle" font-size="26" font-weight="700" fill="#0f172a">How Runbook Autopilot works</text>
+  <text x="600" y="46" text-anchor="middle" font-size="26" font-weight="700" fill="#0f172a">How Blast Door works</text>
   <text x="600" y="74" text-anchor="middle" font-size="15" fill="#475569">The model proposes. A deterministic verifier decides. A second person approves anything risky.</text>
 
   <!-- ROW 1 -->

@@ -1,4 +1,4 @@
-"""Command line: python -m runbook_autopilot {run,status,approve,resume,verify-audit}.
+"""Command line: python -m blast_door {run,status,approve,resume,verify-audit}.
 
 Exit codes: 0 completed / ok, 1 failed or denied, 2 usage or validation error,
 3 paused awaiting approval.
@@ -19,9 +19,9 @@ from .models import RunbookError, RunState, RunStatus
 from .system import System
 from .verifier import Policy
 
-ENV_TOKEN = "RUNBOOK_TOKEN"
-ENV_STATE = "RUNBOOK_STATE_DIR"
-ENV_NO_IDEMPOTENCY = "RUNBOOK_UNSAFE_NO_IDEMPOTENCY"  # eval negative control only
+ENV_TOKEN = "BLAST_DOOR_TOKEN"
+ENV_STATE = "BLAST_DOOR_STATE_DIR"
+ENV_NO_IDEMPOTENCY = "BLAST_DOOR_UNSAFE_NO_IDEMPOTENCY"  # eval negative control only
 
 
 def _clock(now_iso: str | None):
@@ -139,7 +139,7 @@ def cmd_verify_audit(args) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="runbook_autopilot",
+    p = argparse.ArgumentParser(prog="blast_door",
                                 description="Durable runbook agent against a SIMULATED environment")
     p.add_argument("--state-dir", default=os.environ.get(ENV_STATE, ".runbook-state"))
     p.add_argument("--now", help="ISO timestamp to use as 'now' (for change-freeze demos)")

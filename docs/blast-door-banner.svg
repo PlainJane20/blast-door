@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" role="img" aria-labelledby="title description">
-  <title id="title">Runbook Autopilot</title>
-  <desc id="description">Runbooks that prove it before they touch it: dry-run proofs, a deterministic blast-radius verifier, a human approval gate and crash-safe resume, in a simulated environment.</desc>
+  <title id="title">Blast Door</title>
+  <desc id="description">Know the blast radius before you press the button: dry-run proofs, a deterministic blast-radius verifier, a human approval gate and crash-safe resume, in a simulated environment.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#150f05"/>
@@ -31,7 +31,7 @@
       <path d="M46 56h9"/>
     </g>
   </g>
-  <text x="190" y="118" fill="#fffbeb" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="56" font-weight="700">Runbook Autopilot</text>
-  <text x="190" y="162" fill="#fde68a" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="24">Runbooks that prove it before they touch it</text>
+  <text x="190" y="118" fill="#fffbeb" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="56" font-weight="700">Blast Door</text>
+  <text x="190" y="162" fill="#fde68a" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="24">Know the blast radius before you press the button</text>
   <text x="74" y="250" fill="#fef3c7" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="20" opacity=".9">dry-run proofs  ·  deterministic verifier  ·  human approval gate  ·  crash-safe resume</text>
 </svg>

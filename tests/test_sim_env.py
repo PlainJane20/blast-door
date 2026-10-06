@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from runbook_autopilot.sim_env import SimEnv, SimError, WriteContext
+from blast_door.sim_env import SimEnv, SimError, WriteContext
 
 
 @pytest.fixture

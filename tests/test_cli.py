@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from runbook_autopilot.cli import main
+from blast_door.cli import main
 
 EX = Path(__file__).resolve().parents[1] / "examples"
 POLICY = str(EX / "policy.yaml")
@@ -11,9 +11,9 @@ POLICY = str(EX / "policy.yaml")
 
 @pytest.fixture(autouse=True)
 def tokens(monkeypatch):
-    monkeypatch.setenv("RUNBOOK_OPERATOR_TOKENS", "alice:alice-secret,bob:bob-secret")
-    monkeypatch.delenv("RUNBOOK_CRASH_AT", raising=False)
-    monkeypatch.delenv("RUNBOOK_TOKEN", raising=False)
+    monkeypatch.setenv("BLAST_DOOR_OPERATOR_TOKENS", "alice:alice-secret,bob:bob-secret")
+    monkeypatch.delenv("BLAST_DOOR_CRASH_AT", raising=False)
+    monkeypatch.delenv("BLAST_DOOR_TOKEN", raising=False)
 
 
 def cli(tmp_path, *args):
@@ -55,7 +55,7 @@ def test_approve_uses_env_token(tmp_path, capsys, monkeypatch):
     capsys.readouterr()
     cli(tmp_path, "status", "p", "--json")
     aid = json.loads(capsys.readouterr().out)["approvals"][0]["id"]
-    monkeypatch.setenv("RUNBOOK_TOKEN", "bob-secret")
+    monkeypatch.setenv("BLAST_DOOR_TOKEN", "bob-secret")
     assert cli(tmp_path, "approve", aid, "--as", "bob") == 0
 
 

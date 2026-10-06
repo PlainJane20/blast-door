@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from runbook_autopilot.models import Decision
-from runbook_autopilot.verifier import FreezeWindow, Policy, Verifier
+from blast_door.models import Decision
+from blast_door.verifier import FreezeWindow, Policy, Verifier
 
 from conftest import T0
 

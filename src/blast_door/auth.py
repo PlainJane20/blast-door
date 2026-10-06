@@ -1,6 +1,6 @@
 """Static operator tokens -> identity (adapted from edge-sentinel/agent/auth.py).
 
-    RUNBOOK_OPERATOR_TOKENS=alice:tokenA,bob:tokenB
+    BLAST_DOOR_OPERATOR_TOKENS=alice:tokenA,bob:tokenB
 
 These are shared secrets: no rotation, no expiry, no TLS. Unlike edge-sentinel
 there is NO demo mode: with no tokens configured nobody can authenticate, so
@@ -12,7 +12,7 @@ import hmac
 import os
 from dataclasses import dataclass, field
 
-ENV_TOKENS = "RUNBOOK_OPERATOR_TOKENS"
+ENV_TOKENS = "BLAST_DOOR_OPERATOR_TOKENS"
 
 
 class AuthError(Exception):

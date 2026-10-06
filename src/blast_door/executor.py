@@ -5,7 +5,7 @@ Every transition is one SQLite transaction (state + checkpoint + audit record),
 and a write carries an idempotency key that the effects ledger enforces, so a
 run killed at any point resumes without double-executing a write.
 
-Crash points (phase boundaries), usable via RUNBOOK_CRASH_AT=<step>:<phase>
+Crash points (phase boundaries), usable via BLAST_DOOR_CRASH_AT=<step>:<phase>
 ("*" matches any step); the process dies with os._exit(137), the equivalent of
 kill -9:
 
@@ -33,7 +33,7 @@ from .store import RunStore
 from .tools import ParamsError, ToolRegistry
 from .verifier import Policy, Verifier
 
-ENV_CRASH = "RUNBOOK_CRASH_AT"
+ENV_CRASH = "BLAST_DOOR_CRASH_AT"
 PHASES = ("before_plan", "after_plan", "after_verdict", "before_execute",
           "after_effect", "after_execute")
 

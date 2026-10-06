@@ -45,7 +45,7 @@ sequenceDiagram
 
 | Layer | File | Responsibility |
 |---|---|---|
-| Models | `src/runbook_autopilot/models.py` | Pydantic v2 schemas; runbook validation (duplicate ids, unknown dependencies, cycles, unknown tools); plan hash |
+| Models | `src/blast_door/models.py` | Pydantic v2 schemas; runbook validation (duplicate ids, unknown dependencies, cycles, unknown tools); plan hash |
 | Simulated env | `sim_env.py` | Services, dependency edges, hosts, protected flag; read tools; write tools with `dry_run`; append-only effects ledger |
 | Tools | `tools.py` | Registry: kind (read/write), strict param schema, blast-radius function per tool |
 | Verifier | `verifier.py` | Policy (limits, protected handling, freeze windows, allowlist) to a Verdict with reasons. Pure function |
@@ -71,7 +71,7 @@ Run status: `running`, `awaiting_approval`, `completed`, `failed`, `denied`. A d
 
 ## Crash points
 
-`RUNBOOK_CRASH_AT=<step>:<phase>` (or `*:<phase>`) makes the process die with `os._exit(137)` at that boundary: no cleanup, no flush.
+`BLAST_DOOR_CRASH_AT=<step>:<phase>` (or `*:<phase>`) makes the process die with `os._exit(137)` at that boundary: no cleanup, no flush.
 
 | Phase | State at the moment of the kill |
 |---|---|

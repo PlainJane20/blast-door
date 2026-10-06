@@ -3,8 +3,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from runbook_autopilot.models import Plan, Runbook, RunbookError, ToolKind
-from runbook_autopilot.tools import ToolRegistry
+from blast_door.models import Plan, Runbook, RunbookError, ToolKind
+from blast_door.tools import ToolRegistry
 
 KNOWN = ToolRegistry.default().names()
 EX = Path(__file__).resolve().parents[1] / "examples"

@@ -1,9 +1,9 @@
 import pytest
 
-from runbook_autopilot.approvals import ApprovalError
-from runbook_autopilot.auth import AuthConfig, AuthError
-from runbook_autopilot.models import ApprovalStatus, RunStatus, StepStatus
-from runbook_autopilot.verifier import Policy
+from blast_door.approvals import ApprovalError
+from blast_door.auth import AuthConfig, AuthError
+from blast_door.models import ApprovalStatus, RunStatus, StepStatus
+from blast_door.verifier import Policy
 
 from conftest import approve_pending, runbook, start
 

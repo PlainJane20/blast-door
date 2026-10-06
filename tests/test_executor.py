@@ -2,10 +2,10 @@ import sqlite3
 
 import pytest
 
-from runbook_autopilot.executor import Executor, PHASES
-from runbook_autopilot.models import Proposal, RunStatus, StepStatus
-from runbook_autopilot.planner import RuleBasedPlanner, ScriptedPlanner
-from runbook_autopilot.verifier import Policy
+from blast_door.executor import Executor, PHASES
+from blast_door.models import Proposal, RunStatus, StepStatus
+from blast_door.planner import RuleBasedPlanner, ScriptedPlanner
+from blast_door.verifier import Policy
 
 from conftest import approve_pending, runbook, start
 
@@ -85,7 +85,7 @@ def test_environment_drift_between_plan_and_execute_is_blocked(system):
 
 def test_freeze_starting_after_approval_blocks_execution(system, clock):
     from datetime import datetime, timezone
-    from runbook_autopilot.verifier import FreezeWindow
+    from blast_door.verifier import FreezeWindow
     policy = Policy(change_freeze=[FreezeWindow(
         start=datetime.fromtimestamp(clock.t + 600, tz=timezone.utc),
         end=datetime.fromtimestamp(clock.t + 7200, tz=timezone.utc))])

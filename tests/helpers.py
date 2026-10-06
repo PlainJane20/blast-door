@@ -1,11 +1,11 @@
 """Shared in-process crash/resume driver (mirrors what evals/crash_matrix.py does with real kills)."""
 from pathlib import Path
 
-from runbook_autopilot.auth import AuthConfig
-from runbook_autopilot.executor import SimulatedCrash
-from runbook_autopilot.models import RunStatus
-from runbook_autopilot.system import System
-from runbook_autopilot.verifier import Policy
+from blast_door.auth import AuthConfig
+from blast_door.executor import SimulatedCrash
+from blast_door.models import RunStatus
+from blast_door.system import System
+from blast_door.verifier import Policy
 
 FIXTURE = Path(__file__).resolve().parents[1] / "evals" / "fixtures" / "crash_matrix.yaml"
 TOKENS = "alice:alice-secret,bob:bob-secret"

@@ -2,9 +2,9 @@
 import pytest
 
 from evals import unsafe_corpus as u
-from runbook_autopilot import verifier
-from runbook_autopilot.executor import Executor
-from runbook_autopilot.models import Decision, Verdict
+from blast_door import verifier
+from blast_door.executor import Executor
+from blast_door.models import Decision, Verdict
 
 
 @pytest.fixture(scope="module")

@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "runbook-autopilot"
+name = "blast-door"
 version = "0.1.0"
 description = "Durable runbook agent: dry-run proofs, deterministic blast-radius verifier, human approval gate, crash-safe resume (simulated environment)"
 readme = "README.md"
@@ -23,7 +23,7 @@ dev = [
 ]
 
 [project.scripts]
-runbook-autopilot = "runbook_autopilot.cli:main"
+blast-door = "blast_door.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
