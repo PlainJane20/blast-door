@@ -1,0 +1,414 @@
+{
+  "meta": {
+    "environment": "SIMULATED (in-memory/SQLite fake infrastructure, synthetic data)",
+    "python": "3.14.7",
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "timestamp_utc": "2026-10-06T02:07:29+00:00",
+    "git_commit": "cff2497"
+  },
+  "description": "Kill the real CLI process (os._exit(137)) at every step x phase boundary, resume, compare with an uninterrupted run.",
+  "runbook": "evals/fixtures/crash_matrix.yaml",
+  "steps": [
+    "precheck",
+    "restart-metrics",
+    "scale-auth",
+    "rollout-web",
+    "postcheck"
+  ],
+  "phases": [
+    "before_plan",
+    "after_plan",
+    "after_verdict",
+    "before_execute",
+    "after_effect",
+    "after_execute"
+  ],
+  "write_steps": [
+    "restart-metrics",
+    "scale-auth",
+    "rollout-web"
+  ],
+  "kill_points": 30,
+  "passed": 30,
+  "pass_rate": 1.0,
+  "total_duplicate_writes": 0,
+  "all_kill_points_reached": true,
+  "by_phase": {
+    "before_plan": {
+      "points": 5,
+      "passed": 5
+    },
+    "after_plan": {
+      "points": 5,
+      "passed": 5
+    },
+    "after_verdict": {
+      "points": 5,
+      "passed": 5
+    },
+    "before_execute": {
+      "points": 5,
+      "passed": 5
+    },
+    "after_effect": {
+      "points": 5,
+      "passed": 5
+    },
+    "after_execute": {
+      "points": 5,
+      "passed": 5
+    }
+  },
+  "by_step": {
+    "precheck": {
+      "points": 6,
+      "passed": 6
+    },
+    "restart-metrics": {
+      "points": 6,
+      "passed": 6
+    },
+    "scale-auth": {
+      "points": 6,
+      "passed": 6
+    },
+    "rollout-web": {
+      "points": 6,
+      "passed": 6
+    },
+    "postcheck": {
+      "points": 6,
+      "passed": 6
+    }
+  },
+  "failures": [],
+  "points": [
+    {
+      "step": "precheck",
+      "phase": "before_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "precheck",
+      "phase": "after_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "precheck",
+      "phase": "after_verdict",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "precheck",
+      "phase": "before_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "precheck",
+      "phase": "after_effect",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "precheck",
+      "phase": "after_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "restart-metrics",
+      "phase": "before_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "restart-metrics",
+      "phase": "after_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "restart-metrics",
+      "phase": "after_verdict",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "restart-metrics",
+      "phase": "before_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "restart-metrics",
+      "phase": "after_effect",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "restart-metrics",
+      "phase": "after_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "scale-auth",
+      "phase": "before_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "scale-auth",
+      "phase": "after_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "scale-auth",
+      "phase": "after_verdict",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "scale-auth",
+      "phase": "before_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "scale-auth",
+      "phase": "after_effect",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "scale-auth",
+      "phase": "after_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "rollout-web",
+      "phase": "before_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "rollout-web",
+      "phase": "after_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "rollout-web",
+      "phase": "after_verdict",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "rollout-web",
+      "phase": "before_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "rollout-web",
+      "phase": "after_effect",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "rollout-web",
+      "phase": "after_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "postcheck",
+      "phase": "before_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "postcheck",
+      "phase": "after_plan",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "postcheck",
+      "phase": "after_verdict",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "postcheck",
+      "phase": "before_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "postcheck",
+      "phase": "after_effect",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    },
+    {
+      "step": "postcheck",
+      "phase": "after_execute",
+      "killed": true,
+      "passed": true,
+      "duplicate_writes": 0,
+      "ledger_entries": 3,
+      "cli_invocations": 4,
+      "failure": ""
+    }
+  ],
+  "negative_control_idempotency_off": {
+    "description": "Same kill at after_effect with idempotency keys disabled; the ledger must show the duplicate, proving the detector works.",
+    "uninterrupted_run_duplicates": 0,
+    "cases": [
+      {
+        "step": "restart-metrics",
+        "phase": "after_effect",
+        "duplicate_writes": 1,
+        "detected": true
+      },
+      {
+        "step": "scale-auth",
+        "phase": "after_effect",
+        "duplicate_writes": 1,
+        "detected": true
+      },
+      {
+        "step": "rollout-web",
+        "phase": "after_effect",
+        "duplicate_writes": 1,
+        "detected": true
+      }
+    ],
+    "detected": 3,
+    "of": 3
+  }
+}

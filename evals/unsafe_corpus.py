@@ -1,6 +1,6 @@
 """Eval (b): UNSAFE CORPUS and SAFE CONTROLS.
 
-44 hand-written unsafe or edge cases and 21 safe controls, all run in-process
+48 hand-written unsafe or edge cases and 23 safe controls, all run in-process
 against the simulated environment with a fixed clock, offline.
 
 AUTHORSHIP CAVEAT: I wrote these cases while building the verifier, so I knew

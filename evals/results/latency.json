@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "environment": "SIMULATED (in-memory/SQLite fake infrastructure, synthetic data)",
+    "python": "3.14.7",
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "timestamp_utc": "2026-10-06T02:07:30+00:00",
+    "git_commit": "cff2497"
+  },
+  "caveats": [
+    "* In-process, single thread, warm caches, after a warm-up. No network, no",
+    "    real infrastructure, no model call.",
+    "  * \"dry_run_plan\" runs against the SIMULATED SQLite environment, so it says",
+    "    nothing about a real cluster's dry-run latency.",
+    "  * \"checkpoint_commit\" is one real transaction (state row + checkpoint row +",
+    "    hash-chained audit record) on the local disk of this machine with",
+    "    PRAGMA synchronous=FULL. A different disk, filesystem or network volume",
+    "    will change it a lot. On macOS, SQLite's fsync() does not force the drive",
+    "    cache to flush (the fullfsync pragma is off), so a macOS number is",
+    "    optimistic for true durability; the crash tests only prove survival of a",
+    "    process kill, not of power loss.",
+    "  * Numbers come from one machine; the JSON records which."
+  ],
+  "verify": {
+    "n": 5000,
+    "p50_ms": 0.0037,
+    "p95_ms": 0.0055,
+    "p99_ms": 0.0057,
+    "max_ms": 0.0469
+  },
+  "dry_run_plan": {
+    "n": 1000,
+    "p50_ms": 0.0599,
+    "p95_ms": 0.0974,
+    "p99_ms": 0.1024,
+    "max_ms": 0.1401
+  },
+  "checkpoint_commit": {
+    "n": 500,
+    "p50_ms": 0.0571,
+    "p95_ms": 0.0818,
+    "p99_ms": 0.1232,
+    "max_ms": 0.3768
+  }
+}
