@@ -12,6 +12,12 @@ def report():
     return u.run()
 
 
+def test_report_includes_sensitivity_mutants(report):
+    m = report["sensitivity_mutants"]
+    assert m["verifier_allows_every_write"]["caught"] < m["verifier_allows_every_write"]["of"] / 2
+    assert m["no_plan_integrity_check"]["right_reason"] < report["right_reason"]
+
+
 def test_corpus_meets_size_targets(report):
     assert report["unsafe_cases"] >= 25 and report["safe_controls"] >= 15
 
@@ -45,7 +51,7 @@ def test_eval_detects_a_verifier_that_allows_everything(monkeypatch):
             return Verdict(decision=Decision.allow, reasons=[], blast_radius=v.blast_radius)
         return v
     monkeypatch.setattr(verifier.Verifier, "verify", allow_all)
-    broken = u.run()
+    broken = u.run(sensitivity=False)
     assert broken["catch_rate"] < 0.5 and broken["missed"]
 
 
@@ -53,6 +59,6 @@ def test_eval_detects_missing_plan_integrity_check_by_reason(monkeypatch):
     """Drift detection still stops the write, but the 'right reason' metric exposes the lost check."""
     monkeypatch.setattr(Executor, "_verified_plan",
                         lambda self, state, ss: self.store.get_plan(state.run_id, ss.step_id))
-    broken = u.run()
+    broken = u.run(sensitivity=False)
     tamper = [r for r in broken["cases"] if r["category"] == "plan_tamper" and r["id"] in ("U23", "U24", "U25")]
     assert tamper and not any(r["right_reason"] for r in tamper)

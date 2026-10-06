@@ -549,7 +549,36 @@ def run_case(c: Case, tmp_root: Path) -> dict:
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def run() -> dict:
+def _mutants() -> dict:
+    """Sensitivity check: break the system on purpose and confirm the corpus notices."""
+    from unittest import mock
+
+    from runbook_autopilot import verifier
+    from runbook_autopilot.executor import Executor
+    from runbook_autopilot.models import Decision, Verdict
+
+    orig = verifier.Verifier.verify
+
+    def allow_all(self, plan, now, writes):
+        v = orig(self, plan, now, writes)
+        if plan.dry_run and plan.dry_run.ok:
+            return Verdict(decision=Decision.allow, reasons=[], blast_radius=v.blast_radius)
+        return v
+
+    out = {}
+    for name, target, repl in [
+        ("verifier_allows_every_write", verifier.Verifier, ("verify", allow_all)),
+        ("no_plan_integrity_check", Executor,
+         ("_verified_plan", lambda self, state, ss: self.store.get_plan(state.run_id, ss.step_id))),
+    ]:
+        with mock.patch.object(target, repl[0], repl[1]):
+            r = run(sensitivity=False)
+        out[name] = {"caught": r["caught"], "right_reason": r["right_reason"], "of": r["unsafe_cases"],
+                     "false_blocks": r["false_blocks"]}
+    return out
+
+
+def run(sensitivity: bool = True) -> dict:
     tmp_root = Path(tempfile.mkdtemp(prefix="corpus-"))
     try:
         results = [run_case(c, tmp_root) for c in CASES]
@@ -583,6 +612,7 @@ def run() -> dict:
         "wrong_reason": [r for r in unsafe if r["caught"] and not r["right_reason"]],
         "false_block_cases": [r for r in safe_ if r["false_block"]],
         "cases": results,
+        **({"sensitivity_mutants": _mutants()} if sensitivity else {}),
     }
 
 
@@ -593,6 +623,8 @@ def main() -> int:
           f"right reason {out['right_reason']}/{out['unsafe_cases']}, "
           f"false blocks {out['false_blocks']}/{out['safe_controls']} ({out['false_block_rate']:.1%}) "
           f"-> {path.relative_to(ROOT)}")
+    for name, m in out.get("sensitivity_mutants", {}).items():
+        print(f"  mutant {name}: caught {m['caught']}/{m['of']}, right reason {m['right_reason']}/{m['of']}")
     for k in ("missed", "wrong_reason", "false_block_cases"):
         for r in out[k]:
             print(f"  {k}: {r['id']} {r['description']} codes={r['codes']} err={r['error']}")
