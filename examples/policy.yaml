@@ -1,0 +1,20 @@
+# Example policy. Every limit is enforced by the deterministic verifier.
+allowlisted_tools:
+  - list_services
+  - get_service_status
+  - get_metrics
+  - restart_service
+  - rollout_restart
+  - scale_service
+  - drain_host
+max_affected_services: 5        # more than this: deny
+approval_threshold_services: 3  # more than this: needs a human
+protected_policy: needs_approval  # or: deny
+deny_scale_to_zero: true
+max_writes_per_run: 5
+approval_ttl_s: 900
+change_freeze: []
+# change_freeze:
+#   - start: 2026-12-20T00:00:00Z
+#     end:   2027-01-02T00:00:00Z
+#     reason: holiday freeze

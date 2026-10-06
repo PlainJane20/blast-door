@@ -1,0 +1,17 @@
+name: safe-restart-web
+description: Restart a leaf service (nothing depends on it). Expected verdict is allow.
+steps:
+  - id: precheck
+    description: Read the service status before touching it
+    tool: get_service_status
+    params: {service: web}
+  - id: restart-web
+    description: Restart web (blast radius 1)
+    tool: restart_service
+    params: {service: web}
+    depends_on: [precheck]
+  - id: postcheck
+    description: Read the status again
+    tool: get_service_status
+    params: {service: web}
+    depends_on: [restart-web]

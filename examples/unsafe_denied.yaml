@@ -1,0 +1,7 @@
+name: drain-host-a
+description: Drain the host that runs the database and cache. The verifier denies it.
+steps:
+  - id: drain
+    description: host-a runs db (protected) and cache; most of the stack depends on them
+    tool: drain_host
+    params: {host: host-a}

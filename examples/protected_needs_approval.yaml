@@ -1,0 +1,15 @@
+name: scale-protected-auth
+description: Scale a protected service. The verifier requires a second person's approval.
+steps:
+  - id: precheck
+    tool: get_service_status
+    params: {service: auth-svc}
+  - id: scale-auth
+    description: auth-svc is protected, and api and web depend on it
+    tool: scale_service
+    params: {service: auth-svc, replicas: 3}
+    depends_on: [precheck]
+  - id: postcheck
+    tool: get_service_status
+    params: {service: auth-svc}
+    depends_on: [scale-auth]
