@@ -1,0 +1,23 @@
+name: crash-matrix-runbook
+description: >
+  Five steps used by the crash matrix: two reads, two auto-approved writes, and
+  one write on a protected service that needs a second person's approval.
+steps:
+  - id: precheck
+    tool: get_service_status
+    params: {service: web}
+  - id: restart-metrics
+    tool: restart_service
+    params: {service: metrics-agent}
+    depends_on: [precheck]
+  - id: scale-auth
+    tool: scale_service
+    params: {service: auth-svc, replicas: 3}
+    depends_on: [restart-metrics]
+  - id: rollout-web
+    tool: rollout_restart
+    params: {service: web}
+    depends_on: [scale-auth]
+  - id: postcheck
+    tool: list_services
+    depends_on: [rollout-web]
