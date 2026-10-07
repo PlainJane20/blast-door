@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Blast Door: Know the blast radius before you press the button</title>
+<meta name="description" content="A runbook becomes a typed state machine run by a durable agent loop. Before any write the executor produces a **dry-run plan** against a simulated environment. A **deterministic verifier** computes the blast radius, including transitive dependents, and checks policy. A **second person** approves anything risky (single use, expiring, bound to the exact plan). The run is checkpointed in SQLite, so a process killed at any point resumes without repeating a write. The model (planner) only **proposes**; the verifier decides.">
+<style>/* Shared design system. Per-project accent variables are injected after this file. */
+:root{
+  --bg:#ffffff; --surface:#f5f7fa; --surface-2:#eceff4; --text:#12161c; --muted:#4a5565;
+  --border:#d5dbe3; --link:#0b57d0;
+  --ok-bg:#e3f4e8; --ok-fg:#14532d; --ok-bd:#9bd3ad;
+  --sim-bg:#fdf0c9; --sim-fg:#6b3a05; --sim-bd:#e8c56a;
+  --warn-bg:#fde4e1; --warn-fg:#8a1c14; --warn-bd:#eea59d;
+  --info-bg:#e4edfc; --info-fg:#1b3a7a; --info-bd:#a9c0ee;
+  --accent:#0b57d0; --accent-ink:#0b57d0; --accent-fill:#0b57d0; --on-accent:#ffffff; --accent-soft:#0b57d01f;
+  --radius:14px; --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.06);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --header-h:60px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d1117; --surface:#161b22; --surface-2:#1e252e; --text:#e8ecf2; --muted:#a3adbb;
+    --border:#2c3541; --link:#8ab4ff;
+    --ok-bg:#12301f; --ok-fg:#8be0a6; --ok-bd:#235a37;
+    --sim-bg:#3a2a0a; --sim-fg:#fcd34d; --sim-bd:#6b4d12;
+    --warn-bg:#3d1816; --warn-fg:#ffaaa3; --warn-bd:#74302b;
+    --info-bg:#14284a; --info-fg:#a5c4ff; --info-bd:#2b4a80;
+    --accent-ink:#8ab4ff; --accent-fill:#2f6fe0; --on-accent:#ffffff; --accent-soft:#2f6fe026;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.35);
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--header-h) + 12px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 17px/1.65 var(--font);overflow-wrap:break-word}
+img,svg{max-width:100%;height:auto;display:block}
+a{color:var(--link);text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+code{font:500 .88em var(--mono);background:var(--surface-2);padding:.1em .38em;border-radius:6px;overflow-wrap:anywhere}
+h1,h2,h3{line-height:1.2;margin:0;letter-spacing:-.015em}
+p{margin:0 0 1em}
+:focus-visible{outline:3px solid var(--accent-ink);outline-offset:3px;border-radius:6px}
+.wrap{width:100%;max-width:1080px;margin:0 auto;padding:0 24px}
+.skip{position:absolute;left:12px;top:-60px;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:100;font-weight:600}
+.skip:focus{top:12px}
+
+/* Header */
+.site-header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--border)}
+.bar{display:flex;align-items:center;gap:20px;min-height:var(--header-h)}
+.brand{display:inline-flex;align-items:center;gap:10px;font-weight:700;color:var(--text);text-decoration:none;white-space:nowrap}
+.brand-dot{width:14px;height:14px;border-radius:5px;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.site-header nav{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.site-header nav::-webkit-scrollbar{display:none}
+.site-header nav a{color:var(--muted);text-decoration:none;padding:8px 10px;border-radius:8px;font-size:.92rem;font-weight:500;white-space:nowrap}
+.brand{flex-shrink:0;white-space:nowrap}
+@media (min-width:721px){
+  .bar{flex-wrap:wrap;gap:6px 12px}
+  .bar .btn-small{margin-left:auto}
+  .site-header nav{flex:1 1 auto;justify-content:flex-end;flex-wrap:wrap;overflow:visible}
+  .site-header nav a{padding:8px 6px;font-size:.88rem}
+}
+.site-header nav a:hover{color:var(--text);background:var(--surface-2)}
+.btn-small{white-space:nowrap;font-size:.9rem;font-weight:600;text-decoration:none;color:var(--text);border:1px solid var(--border);padding:7px 14px;border-radius:999px}
+.btn-small:hover{background:var(--surface-2)}
+
+/* Hero */
+.hero{padding:72px 0 56px;background:radial-gradient(900px 340px at 85% -10%,var(--accent-soft),transparent 70%),var(--bg);border-bottom:1px solid var(--border)}
+.kicker{color:var(--accent-ink);font-weight:700;font-size:.85rem;letter-spacing:.09em;text-transform:uppercase;margin-bottom:14px}
+.hero h1{font-size:clamp(2.4rem,6vw,4rem);font-weight:800}
+.tagline{font-size:clamp(1.25rem,2.6vw,1.7rem);color:var(--muted);margin:12px 0 22px;font-weight:500;line-height:1.35}
+.summary{max-width:760px;font-size:1.08rem}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 22px}
+.btn{display:inline-block;padding:12px 20px;border-radius:10px;font-weight:650;text-decoration:none;border:1.5px solid var(--border);color:var(--text);line-height:1.2}
+.btn-primary{background:var(--accent-fill);border-color:var(--accent-fill);color:var(--on-accent)}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-ghost:hover{background:var(--surface-2)}
+.chips{list-style:none;display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0 0 32px}
+.chip{font-size:.84rem;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid;line-height:1.35}
+.chip-ok{background:var(--ok-bg);color:var(--ok-fg);border-color:var(--ok-bd)}
+.chip-sim{background:var(--sim-bg);color:var(--sim-fg);border-color:var(--sim-bd)}
+.chip-warn{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-bd)}
+.chip-info{background:var(--info-bg);color:var(--info-fg);border-color:var(--info-bd)}
+.banner{border-radius:20px;box-shadow:var(--shadow);width:100%}
+
+/* Sections */
+.section{padding:72px 0;border-bottom:1px solid var(--border)}
+.section.alt{background:var(--surface)}
+.eyebrow{margin:0 0 8px;font-size:.85rem;font-weight:700;letter-spacing:.1em;color:var(--accent-ink)}
+.section h2{font-size:clamp(1.7rem,3.6vw,2.4rem);font-weight:780;margin-bottom:20px}
+.lede{max-width:780px;font-size:1.06rem}
+.more{margin-top:20px}
+.cards{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:16px}
+.cards-3{grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
+.cards li{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;border-top:3px solid var(--accent)}
+.section.alt .cards li{background:var(--bg)}
+.cards h3{font-size:1.06rem;margin-bottom:8px}
+.cards p{margin:0;color:var(--muted);font-size:.97rem}
+.related .rel-name{font-weight:700;font-size:1.05rem;display:inline-block;margin-bottom:6px;overflow-wrap:anywhere}
+
+/* How it works */
+.diagram{margin:28px 0;background:#f8fafc;border:1px solid var(--border);border-radius:var(--radius);padding:8px;box-shadow:var(--shadow)}
+.diagram img{border-radius:10px;width:100%}
+.diagram figcaption{color:#475569;font-size:.9rem;padding:10px 12px 6px}
+.stepper{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.stepper-hint{color:var(--muted);font-size:.85rem;font-weight:600;margin-bottom:12px;text-transform:uppercase;letter-spacing:.08em}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.tabs button{font:inherit;font-size:.92rem;font-weight:600;display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 8px;border-radius:999px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;text-align:left}
+.tabs button:hover{background:var(--surface-2)}
+.tab-n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--surface-2);font-size:.8rem}
+.tabs button[aria-selected=true]{border-color:var(--accent-ink);background:var(--accent-soft)}
+.tabs button[aria-selected=true] .tab-n{background:var(--accent-fill);color:var(--on-accent)}
+.panel h3{font-size:1.25rem;margin-bottom:10px}
+.panel-n{color:var(--accent-ink);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+.panel p{max-width:760px}
+.panel-note{color:var(--sim-fg);background:var(--sim-bg);border:1px solid var(--sim-bd);border-radius:10px;padding:10px 14px;font-size:.93rem;font-weight:500}
+/* Without JS every stage is listed; with JS only the selected one. */
+html:not(.js) .tabs,html:not(.js) .stepper-hint{display:none}
+html:not(.js) .panel{padding:14px 0;border-top:1px solid var(--border)}
+html.js .panel[hidden]{display:none}
+
+/* Result tables */
+.result{margin:36px 0 0;padding:0}
+.result figcaption{font-size:1.2rem;font-weight:700;margin-bottom:8px}
+.tbl-context{color:var(--muted);max-width:860px;font-size:.97rem}
+.tbl-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;background:var(--bg)}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--border);vertical-align:top}
+thead th{background:var(--surface-2);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+tbody th{font-weight:600}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:color-mix(in srgb,var(--surface) 70%,transparent)}
+.caveat{margin:0;padding:14px 18px;background:var(--sim-bg);color:var(--sim-fg);border:1px solid var(--sim-bd);border-top:0;border-radius:0 0 var(--radius) var(--radius);font-size:.95rem;font-weight:500}
+.caveat-label{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:1.5px solid currentColor;border-radius:6px;padding:1px 7px;margin-right:8px}
+.caveat code{background:rgba(0,0,0,.08)}
+.tbl-notes{color:var(--muted);font-size:.95rem;margin-top:14px;max-width:860px}
+.tbl-notes p{margin-bottom:.6em}
+.tbl-source{color:var(--muted);font-size:.85rem;margin:6px 0 0}
+
+/* Architecture */
+.pattern{background:var(--accent-soft);border-left:4px solid var(--accent);padding:14px 18px;border-radius:0 10px 10px 0;font-weight:600;max-width:860px}
+.pattern span{display:block;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:2px}
+.flow{list-style:none;counter-reset:f;margin:28px 0 0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))}
+.flow li{counter-increment:f;position:relative;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px 14px 52px;min-height:72px}
+.flow li::before{content:counter(f);position:absolute;left:14px;top:14px;width:26px;height:26px;border-radius:50%;background:var(--accent-fill);color:var(--on-accent);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.flow-label{display:block;font-weight:700}
+.flow-detail{display:block;color:var(--muted);font-size:.9rem;line-height:1.45;margin-top:2px}
+.flow + .stepper{margin-top:24px}
+
+/* Not built */
+.section.nb{background:var(--sim-bg);border-top:4px solid var(--sim-bd);border-bottom:4px solid var(--sim-bd)}
+.section.nb .eyebrow{color:var(--sim-fg)}
+.section.nb h2,.section.nb .lede{color:var(--text)}
+.nb-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
+.nb-list li{background:var(--bg);border:1.5px dashed var(--sim-bd);border-radius:var(--radius);padding:18px 20px}
+.nb-list h3{font-size:1.02rem;margin:8px 0}
+.nb-list p{margin:0;color:var(--muted);font-size:.95rem}
+.status{display:inline-block;font-size:.72rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:2px 9px;border-radius:6px;border:1.5px solid}
+.status-not-built{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-bd)}
+.status-not-verified{background:var(--sim-bg);color:var(--sim-fg);border-color:var(--sim-bd)}
+.status-limit{background:var(--info-bg);color:var(--info-fg);border-color:var(--info-bd)}
+
+/* Roadmap */
+.roadmap{list-style:none;margin:8px 0 0;padding:0;max-width:860px}
+.roadmap li{display:grid;grid-template-columns:28px 76px 1fr;gap:6px 10px;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--border)}
+.road-mark{font-weight:800;text-align:center}
+.done .road-mark{color:var(--ok-fg)}
+.todo .road-mark{color:var(--muted)}
+.road-state{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.done .road-state{color:var(--ok-fg)}
+
+/* Footer */
+.site-footer{background:var(--surface);padding:48px 0}
+.foot{display:flex;flex-wrap:wrap;gap:32px 64px;justify-content:space-between}
+.foot-title{font-weight:700;margin-bottom:8px}
+.foot-links{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-wrap:wrap;gap:6px 20px}
+.foot-note{color:var(--muted);font-size:.9rem;max-width:460px}
+.contact{text-align:left}
+.contact-name{font-size:1.25rem;font-weight:750;margin:0}
+.contact-role{color:var(--muted);margin:2px 0 12px}
+.contact-links{list-style:none;padding:0;margin:0;display:flex;gap:10px;flex-wrap:wrap}
+.contact-links a{display:inline-block;padding:8px 16px;border-radius:999px;border:1.5px solid var(--border);color:var(--text);font-weight:600;text-decoration:none;background:var(--bg)}
+.contact-links a:hover{border-color:var(--accent-ink)}
+
+/* Hub */
+.hub-grid{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:24px;grid-template-columns:repeat(auto-fill,minmax(min(100%,440px),1fr))}
+.hub-card{background:var(--bg);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;border-top:4px solid var(--accent)}
+.hub-card img{border-radius:12px;margin-bottom:16px}
+.hub-card h2{font-size:1.6rem;margin:0 0 4px}
+.hub-card h2 a{color:var(--text);text-decoration:none}
+.hub-card h2 a:hover{color:var(--accent-ink);text-decoration:underline}
+.tagline-sm{color:var(--accent-ink);font-weight:650;margin-bottom:10px}
+.hub-card .chips{margin:6px 0 20px}
+.card-links{margin:auto 0 0;display:flex;flex-wrap:wrap;gap:10px}
+
+@media (max-width:720px){
+  body{font-size:16px}
+  .wrap{padding:0 18px}
+  .bar{flex-wrap:wrap;gap:6px 12px;padding-top:8px;padding-bottom:4px}
+  .site-header nav{order:3;width:100%;margin-left:-8px;padding-bottom:4px}
+  .btn-small{margin-left:auto}
+  :root{--header-h:96px}
+  .hero{padding:40px 0 36px}
+  .section{padding:48px 0}
+  .stepper{padding:14px}
+  .roadmap li{grid-template-columns:24px 1fr;}
+  .road-state{grid-column:2}
+  .road-text{grid-column:2}
+  th,td{padding:10px 12px}
+  .tbl-scroll.wide table{min-width:560px}
+  .diagram-scroll{overflow-x:auto}
+  .diagram-scroll img{min-width:760px}
+  .scroll-hint{display:block}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{transition:none!important;animation:none!important}
+}
+@media print{.site-header,.skip{display:none}}
+thead code{text-transform:none;background:none;padding:0;letter-spacing:0}
+.diagram-scroll{border-radius:10px}
+.scroll-hint{display:none;color:var(--muted);font-size:.85rem;margin:-14px 0 20px}
+.hero h1+.summary{margin-top:20px}
+:root{--accent:#f59e0b;--accent-ink:#9e6506;--accent-fill:#9e6506;--on-accent:#ffffff;--accent-soft:#f59e0b1f;}@media (prefers-color-scheme:dark){:root{--accent-ink:#f59e0b;--accent-fill:#f59e0b;--on-accent:#0b0f14;--accent-soft:#f59e0b26;}}</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a><header class="site-header"><div class="wrap bar"><a class="brand" href="https://plainjane20.github.io/projects/"><span class="brand-dot" aria-hidden="true"></span>Blast Door</a><nav aria-label="Sections"><a href="#problem">Problem</a><a href="#how">How it works</a><a href="#measured">Measured</a><a href="#architecture">Architecture</a><a href="#competencies">Competencies</a><a href="#not-built">Not built</a><a href="#roadmap">Roadmap</a></nav><a class="btn-small" href="https://github.com/PlainJane20/blast-door" rel="noopener noreferrer" target="_blank">GitHub repo</a></div></header><main id="main"><section class="hero" aria-labelledby="hero-h"><div class="wrap"><p class="kicker">Portfolio project: durable agent loop + deterministic verifier</p><h1 id="hero-h">Blast Door</h1><p class="tagline">Know the blast radius before you press the button</p><p class="summary">A runbook becomes a typed state machine run by a durable agent loop. Before any write the executor produces a <strong>dry-run plan</strong> against a simulated environment. A <strong>deterministic verifier</strong> computes the blast radius, including transitive dependents, and checks policy. A <strong>second person</strong> approves anything risky (single use, expiring, bound to the exact plan). The run is checkpointed in SQLite, so a process killed at any point resumes without repeating a write. The model (planner) only <strong>proposes</strong>; the verifier decides.</p><p class="cta"><a class="btn btn-primary" href="#measured">See what is measured</a><a class="btn btn-ghost" href="https://github.com/PlainJane20/blast-door" rel="noopener noreferrer" target="_blank">View the repo</a><a class="btn btn-ghost" href="#not-built">What is not built</a></p><ul class="chips" aria-label="Status"><li class="chip chip-ok">185 offline tests passing</li><li class="chip chip-ok">Crash matrix: 30 of 30 kill points</li><li class="chip chip-sim">Environment SIMULATED</li><li class="chip chip-warn">No live LLM planner</li><li class="chip chip-info">CI on Python 3.11 and 3.12 (result: Actions tab)</li></ul><img class="banner" src="assets/banner.svg" alt="Blast Door banner: runbooks that prove it before they touch it" width="1200" height="320"></div></section><section id="problem" class="section " aria-labelledby="problem-h"><div class="wrap"><p class="eyebrow"><span>01</span></p><h2 id="problem-h">The problem</h2><p class="lede">An agent that runs runbooks must stay safe when its planner is wrong or hostile, and when its own process dies mid-write.</p><p class="lede">The agent projects in this portfolio govern what agents may do. This one asks the operational question: what does it take to let an agent run a runbook at all? Not a better prompt. A dry-run proof before every write, a verdict the planner cannot argue with, an approval that cannot be reused or self-granted, and a loop that survives <code>kill -9</code> without doing anything twice.</p><ul class="cards cards-3"><li><h3>Blast radius is a graph property</h3><p>Restarting <code>cache</code> looks like one service and affects 5 (<code>api</code>, <code>search</code> and <code>worker</code> depend on it directly, and <code>web</code> through <code>api</code>).</p></li><li><h3>The dangerous kill point</h3><p>At <code>after_effect</code> the write lands but the checkpoint does not, and the executor cannot tell from its own state. Recovery works because the idempotency key is enforced where the write happens.</p></li><li><h3>A perfect score proves nothing</h3><p>The first corpus run scored 100% on everything. A perfect score from author-written cases is exactly what a vacuous eval would also produce, so sensitivity mutants and a negative control were added.</p></li></ul></div></section><section id="how" class="section alt" aria-labelledby="how-h"><div class="wrap"><p class="eyebrow"><span>02</span></p><h2 id="how-h">How it works</h2><p class="lede">A runbook lists steps. For each step the planner proposes an action. The system first <strong>rehearses</strong> it (a dry run that changes nothing and lists everything it would touch, including services that depend on the target). A rule-based verifier turns that rehearsal into allow, ask a human, or deny. If a human is needed it must be a different person than the requester, and their approval works once, expires, and only for that exact plan. Right before writing, the system checks again that the world still matches the plan. Every step is saved so the run can pick up after a crash.</p><figure class="diagram"><div class="diagram-scroll" role="region" aria-label="Diagram, scrolls sideways on small screens" tabindex="0"><img src="assets/how-it-works.svg" alt="How Blast Door works: runbook, planner, dry run, verifier, verdict, human gate, action, ledger and audit" width="1200" height="640"></div></figure><p class="scroll-hint">Swipe the diagram sideways to see all of it.</p><div class="stepper" data-stepper><p class="stepper-hint">Stages of the diagram, one at a time</p><div class="tabs" role="tablist" aria-label="Stages"><button type="button" role="tab" id="tab-0" aria-controls="panel-0" aria-selected="true" tabindex="0"><span class="tab-n">1</span><span class="tab-t">The runbook: typed steps</span></button><button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="false" tabindex="-1"><span class="tab-n">2</span><span class="tab-t">The planner: proposes only</span></button><button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" tabindex="-1"><span class="tab-n">3</span><span class="tab-t">The dry run: proof first</span></button><button type="button" role="tab" id="tab-3" aria-controls="panel-3" aria-selected="false" tabindex="-1"><span class="tab-n">4</span><span class="tab-t">The verifier: decides</span></button><button type="button" role="tab" id="tab-4" aria-controls="panel-4" aria-selected="false" tabindex="-1"><span class="tab-n">5</span><span class="tab-t">The verdict</span></button><button type="button" role="tab" id="tab-5" aria-controls="panel-5" aria-selected="false" tabindex="-1"><span class="tab-n">6</span><span class="tab-t">The human gate: a second person</span></button><button type="button" role="tab" id="tab-6" aria-controls="panel-6" aria-selected="false" tabindex="-1"><span class="tab-n">7</span><span class="tab-t">The action: re-verify, then write</span></button><button type="button" role="tab" id="tab-7" aria-controls="panel-7" aria-selected="false" tabindex="-1"><span class="tab-n">8</span><span class="tab-t">The record: ledger and audit</span></button></div><div class="panels"><div role="tabpanel" id="panel-0" aria-labelledby="tab-0" class="panel"><h3><span class="panel-n">Stage 1</span> The runbook: typed steps</h3><p>YAML state machine: ids, tools, depends_on. Cycles and unknown tools rejected.</p></div><div role="tabpanel" id="panel-1" aria-labelledby="tab-1" class="panel" data-later><h3><span class="panel-n">Stage 2</span> The planner: proposes only</h3><p>Rule-based, or a scripted stand-in for a model. No authority to act.</p><p class="panel-note">Not built: a live LLM planner. No model is called anywhere in this repo.</p></div><div role="tabpanel" id="panel-2" aria-labelledby="tab-2" class="panel" data-later><h3><span class="panel-n">Stage 3</span> The dry run: proof first</h3><p>Exact affected set, with transitive dependents. Simulated env, nothing changes.</p><p class="panel-note">The dry run runs against a model of infrastructure written by the author; a real dry-run can disagree with it.</p></div><div role="tabpanel" id="panel-3" aria-labelledby="tab-3" class="panel" data-later><h3><span class="panel-n">Stage 4</span> The verifier: decides</h3><p>Blast radius + policy limits. No LLM, no randomness. Same input, same verdict.</p></div><div role="tabpanel" id="panel-4" aria-labelledby="tab-4" class="panel" data-later><h3><span class="panel-n">Stage 5</span> The verdict</h3><p>allow: go to execute.</p><p>needs approval: ask a human.</p><p>deny: stop, write nothing.</p></div><div role="tabpanel" id="panel-5" aria-labelledby="tab-5" class="panel" data-later><h3><span class="panel-n">Stage 6</span> The human gate: a second person</h3><p>Single-use, expires, bound to the hash of the exact plan. No self-approval.</p></div><div role="tabpanel" id="panel-6" aria-labelledby="tab-6" class="panel" data-later><h3><span class="panel-n">Stage 7</span> The action: re-verify, then write</h3><p>Idempotency key per write, so a retry cannot repeat it. Plan drift blocks the write.</p></div><div role="tabpanel" id="panel-7" aria-labelledby="tab-7" class="panel" data-later><h3><span class="panel-n">Stage 8</span> The record: ledger and audit</h3><p>Append-only effects ledger, hash-chained audit log.</p></div></div></div></div></section><section id="measured" class="section " aria-labelledby="measured-h"><div class="wrap"><p class="eyebrow"><span>03</span></p><h2 id="measured-h">What is measured</h2><p class="lede">All numbers below come from <code>python -m evals.run_all</code> and <code>python -m pytest</code>, run on Python 3.14.7 on an arm64 Mac (the committed JSON in <code>evals/results/</code> records the machine and git commit). CI runs the same commands on Python 3.11 and 3.12. The environment is <strong>SIMULATED</strong>.</p><figure class="result" aria-labelledby="tbl-0-cap"><figcaption id="tbl-0-cap">Example verdicts (default policy, <code>examples/</code>)</figcaption><div class="tbl-scroll wide" role="region" aria-labelledby="tbl-0-cap" tabindex="0"><table><thead><tr><th scope="col">Example</th><th scope="col">What it does</th><th scope="col">Verdict</th><th scope="col">Why</th></tr></thead><tbody><tr><th scope="row"><code>safe_restart.yaml</code></th><td>Restart <code>web</code></td><td>allow, completed, 1 write</td><td>1 affected service, nothing protected</td></tr><tr><th scope="row"><code>protected_needs_approval.yaml</code></th><td>Scale <code>auth-svc</code></td><td>needs approval; completed after a second operator approves</td><td><code>auth-svc</code> is protected; <code>api</code> and <code>web</code> depend on it: 3 affected services</td></tr><tr><th scope="row"><code>unsafe_denied.yaml</code></th><td>Drain <code>host-a</code></td><td><strong>deny</strong>, nothing written</td><td>8 affected services (limit 5), <code>db</code> and <code>auth-svc</code> are protected</td></tr></tbody></table></div><p class="caveat"><span class="caveat-label">Caveat</span> Everything here runs against a SIMULATED environment (fake services, hosts and replicas in SQLite, synthetic data). No real infrastructure is touched, no LLM or network is called, and no tests or evals need an API key.</p><p class="tbl-source">Source: <code>examples/</code></p></figure><figure class="result" aria-labelledby="tbl-1-cap"><figcaption id="tbl-1-cap">(a) Crash matrix: kill the real process at every step and phase</figcaption><p class="tbl-context">Every (step, phase) pair of a 5-step runbook (two reads, three writes, one of them approval-gated). The real CLI runs in a subprocess and dies with <code>os._exit(137)</code> at the boundary; a fresh process resumes; a second operator approves where the run pauses. Pass means final environment state, effects ledger and step statuses equal an uninterrupted run, with no duplicate write and a verifying audit chain.</p><div class="tbl-scroll wide" role="region" aria-labelledby="tbl-1-cap" tabindex="0"><table><thead><tr><th scope="col">Phase (kill point)</th><th scope="col">Points</th><th scope="col">Passed</th></tr></thead><tbody><tr><th scope="row"><code>before_plan</code></th><td>5</td><td>5</td></tr><tr><th scope="row"><code>after_plan</code></th><td>5</td><td>5</td></tr><tr><th scope="row"><code>after_verdict</code></th><td>5</td><td>5</td></tr><tr><th scope="row"><code>before_execute</code></th><td>5</td><td>5</td></tr><tr><th scope="row"><code>after_effect</code> (effect landed, checkpoint not written)</th><td>5</td><td>5</td></tr><tr><th scope="row"><code>after_execute</code></th><td>5</td><td>5</td></tr><tr><th scope="row"><strong>Total</strong></th><td><strong>30</strong></td><td><strong>30 (100%)</strong>, 0 duplicate writes, all 30 kill points confirmed reached</td></tr></tbody></table></div><p class="caveat"><span class="caveat-label">Caveat</span> Crash tests are process kills, not power loss. <code>os._exit(137)</code> is the stand-in for <code>kill -9</code>. On macOS SQLite&#x27;s <code>fsync</code> does not flush the drive cache by default.</p><div class="tbl-notes"><p>Negative control: with idempotency keys switched off (<code>BLAST_DOOR_UNSAFE_NO_IDEMPOTENCY</code>, for the eval only), the same kill at <code>after_effect</code> produced a duplicate write on 3 of 3 write steps, and the uninterrupted run had none. So the ledger check can fail, and the 30 of 30 is not vacuous.</p></div><p class="tbl-source">Source: <code>evals/results/crash_matrix.json</code></p></figure><figure class="result" aria-labelledby="tbl-2-cap"><figcaption id="tbl-2-cap">(b) Unsafe corpus and safe controls</figcaption><p class="tbl-context">48 unsafe or edge cases and 23 safe controls, in-process, fixed clock, offline. <strong>Caught</strong> means the forbidden write never reached the effects ledger (or the runbook was rejected at load); a run blocked pending approval counts as caught. <strong>Right reason</strong> means the expected reason code was actually reported.</p><div class="tbl-scroll wide" role="region" aria-labelledby="tbl-2-cap" tabindex="0"><table><thead><tr><th scope="col">Category</th><th scope="col">Cases</th><th scope="col">Caught</th><th scope="col">Right reason</th></tr></thead><tbody><tr><th scope="row">blast radius over limit or threshold</th><td>5</td><td>5</td><td>5</td></tr><tr><th scope="row">protected resource</th><td>4</td><td>4</td><td>4</td></tr><tr><th scope="row">unknown tool</th><td>3</td><td>3</td><td>3</td></tr><tr><th scope="row">tool not on allowlist</th><td>1</td><td>1</td><td>1</td></tr><tr><th scope="row">change freeze (incl. one starting after approval)</th><td>3</td><td>3</td><td>3</td></tr><tr><th scope="row">dependency cycle / unknown dependency</th><td>4</td><td>4</td><td>4</td></tr><tr><th scope="row">duplicate ids</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">plan tampered after approval</th><td>4</td><td>4</td><td>4</td></tr><tr><th scope="row">plan drift (world changed after approval)</th><td>1</td><td>1</td><td>1</td></tr><tr><th scope="row">expired approval</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">self-approval</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">unauthenticated approval (bad or no token)</th><td>2</td><td>2</td><td>2</td></tr><tr><th scope="row">replayed approval</th><td>3</td><td>3</td><td>3</td></tr><tr><th scope="row">tool param schema violation</th><td>5</td><td>5</td><td>5</td></tr><tr><th scope="row">ScriptedPlanner proposing a destructive step</th><td>4</td><td>4</td><td>4</td></tr><tr><th scope="row">write budget, scale-to-zero, unknown resource</th><td>3</td><td>3</td><td>3</td></tr><tr><th scope="row"><strong>Unsafe total</strong></th><td><strong>48</strong></td><td><strong>48 (100%)</strong></td><td><strong>48 (100%)</strong></td></tr><tr><th scope="row"><strong>Safe controls</strong> (allow, read-only, approved flow, policy boundary, scripted safe: 10, 2, 4, 5, 2)</th><td><strong>23</strong></td><td>false blocks: <strong>0 (0%)</strong></td><td>n/a</td></tr></tbody></table></div><p class="caveat"><span class="caveat-label">Caveat</span> I wrote these cases while writing the verifier, so I knew every rule. A 100% catch rate shows the rules behave as written; it is <strong>not</strong> an estimate of how a real adversary or a real model would do.</p><p class="tbl-source">Source: <code>evals/results/unsafe_corpus.json</code></p></figure><figure class="result" aria-labelledby="tbl-3-cap"><figcaption id="tbl-3-cap">Does the corpus fail when it should? Broken on purpose</figcaption><p class="tbl-context">To check that the corpus can fail, it is also run against deliberately broken systems (saved in <code>evals/results/unsafe_corpus.json</code>).</p><div class="tbl-scroll wide" role="region" aria-labelledby="tbl-3-cap" tabindex="0"><table><thead><tr><th scope="col">Broken on purpose</th><th scope="col">Caught</th><th scope="col">Right reason</th></tr></thead><tbody><tr><th scope="row">Verifier allows every write</th><td>15 of 48</td><td>15 of 48</td></tr><tr><th scope="row">Plan integrity check removed</th><td>47 of 48</td><td>45 of 48</td></tr></tbody></table></div><p class="caveat"><span class="caveat-label">Caveat</span> With the integrity check removed, the drift check still stops most tampering (a second layer), but three cases lose their right reason, and in one (the dry-run set shrunk after approval) the originally approved write executes. That is why &quot;right reason&quot; is reported separately.</p><p class="tbl-source">Source: <code>evals/results/unsafe_corpus.json</code></p></figure><figure class="result" aria-labelledby="tbl-4-cap"><figcaption id="tbl-4-cap">(c) Latency of the verify and checkpoint steps</figcaption><p class="tbl-context">In-process on one machine (arm64 macOS, Python 3.14.7), after warm-up, simulated environment. <code>checkpoint_commit</code> is one real transaction (state row, checkpoint row and a hash-chained audit record) with <code>PRAGMA synchronous=FULL</code>.</p><div class="tbl-scroll wide" role="region" aria-labelledby="tbl-4-cap" tabindex="0"><table><thead><tr><th scope="col">Step</th><th scope="col">n</th><th scope="col">p50</th><th scope="col">p95</th></tr></thead><tbody><tr><th scope="row"><code>verify</code> (pure function)</th><td>5,000</td><td>0.0038 ms</td><td>0.0055 ms</td></tr><tr><th scope="row"><code>dry_run_plan</code> (against the simulated env)</th><td>1,000</td><td>0.0606 ms</td><td>0.0996 ms</td></tr><tr><th scope="row"><code>checkpoint_commit</code></th><td>500</td><td>0.0593 ms</td><td>0.0948 ms</td></tr></tbody></table></div><p class="caveat"><span class="caveat-label">Caveat</span> These exclude any real infrastructure, network or model call, and the dry-run figure says nothing about a real cluster. On macOS SQLite&#x27;s <code>fsync</code> does not flush the drive cache by default, so the checkpoint figure is optimistic for true durability; the crash tests prove survival of a process kill, not of power loss.</p><p class="tbl-source">Source: <code>evals/latency.py</code></p></figure></div></section><section id="architecture" class="section alt" aria-labelledby="architecture-h"><div class="wrap"><p class="eyebrow"><span>04</span></p><h2 id="architecture-h">Architecture pattern</h2><p class="pattern"><span>Pattern</span> Autonomous loop (durable ReAct-style) with a human approval gate and a deterministic verifier.</p><p class="lede">The planner only proposes. A dry run on the simulated environment produces the affected set, a pure-function verifier turns it into allow, needs approval or deny, and one SQLite transaction per transition holds the state, checkpoint and a hash-chained audit record. A fresh dry run must match before the write, which carries an idempotency key.</p><ol class="flow"><li><span class="flow-label">Runbook YAML</span><span class="flow-detail">typed steps</span></li><li><span class="flow-label">Planner</span><span class="flow-detail">proposes only</span></li><li><span class="flow-label">Dry run</span><span class="flow-detail">simulated env</span></li><li><span class="flow-label">Verifier</span><span class="flow-detail">blast radius + policy; deny: run halts, nothing written</span></li><li><span class="flow-label">Human gate</span><span class="flow-detail">second person, single use, plan-hash bound (when the verdict needs approval)</span></li><li><span class="flow-label">Re-verify</span><span class="flow-detail">fresh dry run must match</span></li><li><span class="flow-label">Write with idempotency key</span><span class="flow-detail">to the append-only effects ledger</span></li><li><span class="flow-label">SQLite checkpoint + hash-chained audit</span><span class="flow-detail">resume after a crash re-enters at the planner</span></li></ol><p class="more"><a href="https://github.com/PlainJane20/blast-door/blob/main/docs/ARCHITECTURE.md" rel="noopener noreferrer" target="_blank">Sequence diagram, state machine, crash phases and failure table in the repo</a></p></div></section><section id="competencies" class="section " aria-labelledby="competencies-h"><div class="wrap"><p class="eyebrow"><span>05</span></p><h2 id="competencies-h">Competencies demonstrated</h2><ul class="cards cards-3"><li><h3>Durable execution and fault injection</h3><p>Kill at every step x phase boundary; resume equals an uninterrupted run; a negative control proves the detector can fail.</p></li><li><h3>Risk and governance</h3><p>Blast radius from a dry-run (with transitive dependents), protected resources, change freeze, write budget, allowlist, unknown tools denied.</p></li><li><h3>Human-in-the-loop design</h3><p>Approvals are single-use, expiring, bound to a plan hash, requester is not approver, identity comes from a token.</p></li><li><h3>Auditability</h3><p>Hash chain committed in the same transaction as each transition; <code>verify-audit</code>.</p></li><li><h3>Observability</h3><p>OpenTelemetry spans for run, step, dry_run, verify, approval_wait, execute, resume; no-op by default.</p></li><li><h3>Measurement discipline</h3><p>Catch rate reported with a separate right-reason rate; sensitivity mutants; authorship bias and latency caveats stated beside the numbers.</p></li></ul><p class="more"><a href="https://github.com/PlainJane20/blast-door/blob/main/docs/COMPETENCY_MAP.md" rel="noopener noreferrer" target="_blank">Full mapping to code and tests</a></p></div></section><section id="not-built" class="section nb" aria-labelledby="not-built-h"><div class="wrap"><p class="eyebrow"><span>06</span></p><h2 id="not-built-h">What is not built or not verified yet</h2><p class="lede">Listed from the repository&#x27;s own README (&quot;Planned (not built)&quot; and &quot;Known limits&quot;). Nothing here has touched a real system.</p><ul class="nb-list"><li><span class="status status-not-built">not built</span><h3>A live LLM planner</h3><p>Planned behind the existing <code>Planner</code> protocol, with confidence-based escalation. Not built: no live model is called anywhere in this repo.</p></li><li><span class="status status-not-built">not built</span><h3>An MCP server</h3><p>Planned: expose the read tools and the gated write tools, so an external agent proposes through the same verifier and approval gate.</p></li><li><span class="status status-not-built">not built</span><h3>A real Kubernetes dry-run adapter</h3><p>Planned: <code>kubectl --dry-run=server</code> replacing the simulated environment&#x27;s dry-run.</p></li><li><span class="status status-limit">limit</span><h3>Simulated environment</h3><p>The dry-run runs against a model of infrastructure that I wrote. A real dry-run can disagree with it. Nothing has touched a real system.</p></li><li><span class="status status-limit">limit</span><h3>Blast radius is only as good as the dependency graph</h3><p>A missing edge is a missing dependent, and the verifier will allow it with confidence.</p></li><li><span class="status status-limit">limit</span><h3>Operator tokens are static shared secrets</h3><p>From an environment variable: no rotation, expiry, binding or TLS. A compromised token, or two colluding operators, defeats the gate.</p></li><li><span class="status status-limit">limit</span><h3>Database and audit chain</h3><p>Anyone with write access to the database files can drop the append-only triggers and rewrite the audit chain or the ledger. The chain detects edits, not a full rewrite.</p></li><li><span class="status status-limit">limit</span><h3>Crash tests are process kills, not power loss</h3><p><code>os._exit(137)</code> is the stand-in for <code>kill -9</code>. On macOS SQLite&#x27;s <code>fsync</code> does not flush the drive cache by default.</p></li><li><span class="status status-limit">limit</span><h3>No concurrency control</h3><p>Two processes resuming the same run are not coordinated. The ledger&#x27;s UNIQUE idempotency key still stops a duplicate write; other races are not analyzed.</p></li><li><span class="status status-limit">limit</span><h3>The corpus is author-written</h3><p>So catch rates are expected to be high. The latency numbers come from one machine and exclude any real infrastructure.</p></li><li><span class="status status-not-verified">not verified</span><h3>CI results</h3><p>I ran everything locally on Python 3.14.7. The code avoids newer syntax and CI runs 3.11 and 3.12; see the CI result in the repository&#x27;s Actions tab.</p></li></ul></div></section><section id="roadmap" class="section alt" aria-labelledby="roadmap-h"><div class="wrap"><p class="eyebrow"><span>07</span></p><h2 id="roadmap-h">Roadmap</h2><ul class="roadmap"><li class="todo"><span class="road-mark" aria-hidden="true">&#9675;</span><span class="road-state">Not done</span><span class="road-text"><strong>MCP server</strong> exposing the read tools and the gated write tools, so an external agent proposes through the same verifier and approval gate</span></li><li class="todo"><span class="road-mark" aria-hidden="true">&#9675;</span><span class="road-state">Not done</span><span class="road-text"><strong>LLM planner with confidence-based escalation</strong> behind the existing <code>Planner</code> protocol. Not built: no live model is called anywhere in this repo</span></li><li class="todo"><span class="road-mark" aria-hidden="true">&#9675;</span><span class="road-state">Not done</span><span class="road-text"><strong>Real Kubernetes dry-run adapter</strong> (<code>kubectl --dry-run=server</code>) replacing the simulated environment&#x27;s dry-run</span></li><li class="todo"><span class="road-mark" aria-hidden="true">&#9675;</span><span class="road-state">Not done</span><span class="road-text">Run leases for concurrent resumers; an external anchor for the audit chain head; token rotation and expiry</span></li><li class="done"><span class="road-mark" aria-hidden="true">&#10003;</span><span class="road-state">Done</span><span class="road-text">Runbooks as typed, validated state machines (cycles, duplicate ids, unknown tools)</span></li><li class="done"><span class="road-mark" aria-hidden="true">&#10003;</span><span class="road-state">Done</span><span class="road-text">Dry-run proofs, deterministic verifier, approvals, durable resume, tracing, CLI</span></li><li class="done"><span class="road-mark" aria-hidden="true">&#10003;</span><span class="road-state">Done</span><span class="road-text">Crash matrix, unsafe corpus with safe controls, latency probe, all offline</span></li></ul></div></section><section id="related" class="section " aria-labelledby="related-h"><div class="wrap"><p class="eyebrow"><span>08</span></p><h2 id="related-h">Related projects</h2><ul class="cards cards-3 related"><li><a class="rel-name" href="https://github.com/PlainJane20/edge-sentinel" rel="noopener noreferrer" target="_blank">edge-sentinel</a><p>The model-proposes, policy-decides rule and the token identity, hash-chained audit and expiring-approval patterns are adapted from it.</p></li><li><a class="rel-name" href="https://github.com/PlainJane20/it-agent-platform" rel="noopener noreferrer" target="_blank">it-agent-platform</a><p>The propose, approve, execute flow follows it.</p></li><li><a class="rel-name" href="https://github.com/PlainJane20/switchboard" rel="noopener noreferrer" target="_blank">switchboard</a><p>Risk-tiered dispatch follows it.</p></li><li><a class="rel-name" href="https://github.com/PlainJane20/agent-control-tower" rel="noopener noreferrer" target="_blank">agent-control-tower</a><p>The fail-closed table follows it.</p></li><li><a class="rel-name" href="https://github.com/PlainJane20/incident-postmortem-agent" rel="noopener noreferrer" target="_blank">incident-postmortem-agent</a><p>A natural consumer of this executor: the runbook a postmortem recommends is the runbook this would run (not wired up).</p></li></ul></div></section></main><footer class="site-footer"><div class="wrap foot"><div><p class="foot-title">Blast Door</p><ul class="foot-links"><li><a href="https://github.com/PlainJane20/blast-door" rel="noopener noreferrer" target="_blank">Repository</a></li><li><a href="https://github.com/PlainJane20/blast-door/blob/main/docs/ARCHITECTURE.md" rel="noopener noreferrer" target="_blank">Architecture</a></li><li><a href="https://github.com/PlainJane20/blast-door/blob/main/docs/THREAT_MODEL.md" rel="noopener noreferrer" target="_blank">Threat model</a></li><li><a href="https://github.com/PlainJane20/blast-door/blob/main/docs/adr/001-model-proposes-verifier-decides.md" rel="noopener noreferrer" target="_blank">ADR 001</a></li><li>MIT license</li><li><a href="https://plainjane20.github.io/projects/">All projects</a></li></ul><p class="foot-note">Static page, no scripts beyond one small inline file, no trackers, no external requests.</p></div><div class="contact" id="contact"><p class="contact-name">Navi Sohi</p><p class="contact-role">Technical Program Manager &amp; Automation Engineer</p><ul class="contact-links"><li><a href="https://www.linkedin.com/in/navisohi/" rel="noopener noreferrer" target="_blank">LinkedIn</a></li><li><a href="https://github.com/PlainJane20" rel="noopener noreferrer" target="_blank">GitHub</a></li><li><a href="mailto:nks.ai.dev@gmail.com">Email</a></li></ul></div></div></footer>
+<script>/* Progressive enhancement: turns the stage list into an accessible tab set. */
+(function () {
+  var root = document.documentElement;
+  root.classList.add("js");
+  document.querySelectorAll("[data-stepper]").forEach(function (box) {
+    var tabs = Array.prototype.slice.call(box.querySelectorAll('[role="tab"]'));
+    var panels = Array.prototype.slice.call(box.querySelectorAll('[role="tabpanel"]'));
+    function select(i, focus) {
+      tabs.forEach(function (t, j) {
+        t.setAttribute("aria-selected", j === i ? "true" : "false");
+        t.tabIndex = j === i ? 0 : -1;
+      });
+      panels.forEach(function (p, j) { p.hidden = j !== i; });
+      if (focus) tabs[i].focus();
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener("click", function () { select(i, false); });
+      t.addEventListener("keydown", function (e) {
+        var n = tabs.length, k = null;
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") k = (i + 1) % n;
+        else if (e.key === "ArrowLeft" || e.key === "ArrowUp") k = (i + n - 1) % n;
+        else if (e.key === "Home") k = 0;
+        else if (e.key === "End") k = n - 1;
+        if (k !== null) { e.preventDefault(); select(k, true); }
+      });
+    });
+    select(0, false);
+  });
+})();
+</script>
+</body>
+</html>
