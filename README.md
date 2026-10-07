@@ -177,9 +177,9 @@ a hash-chained audit record) with `PRAGMA synchronous=FULL`.
 
 | Step | n | p50 | p95 |
 |---|---|---|---|
-| `verify` (pure function) | 5,000 | 0.0037 ms | 0.0055 ms |
-| `dry_run_plan` (against the simulated env) | 1,000 | 0.0599 ms | 0.0974 ms |
-| `checkpoint_commit` | 500 | 0.0571 ms | 0.0818 ms |
+| `verify` (pure function) | 5,000 | 0.0038 ms | 0.0055 ms |
+| `dry_run_plan` (against the simulated env) | 1,000 | 0.0606 ms | 0.0996 ms |
+| `checkpoint_commit` | 500 | 0.0593 ms | 0.0948 ms |
 
 **Caveats:** these exclude any real infrastructure, network or model call, and the
 dry-run figure says nothing about a real cluster. On macOS SQLite's `fsync` does not
